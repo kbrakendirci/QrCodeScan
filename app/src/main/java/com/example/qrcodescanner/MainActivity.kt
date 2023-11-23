@@ -18,7 +18,7 @@ import com.google.zxing.qrcode.QRCodeReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+import com.google.zxing.Result
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -26,6 +26,10 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val IMPORT_LAUNCH_INPUT = "*/*"
     }
+
+
+    private  var qrResult : Result? = null
+    val qrArrayList: ArrayList<String> = arrayListOf("emre.com","kübra.com","btc.com")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +41,17 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     fileScannerQrCodeResult.launch(IMPORT_LAUNCH_INPUT)
+                    //galleryChoose(arrayListOf("emre.com","kübra.com","btc.com"))
                 }
             }
         }
+    }
+
+    fun galleryChoose(qrList : ArrayList<String>):Boolean{
+       //fileScannerQrCodeResult.launch(IMPORT_LAUNCH_INPUT)
+        //Log.i("RESULT", "result3: ${qrResult?.text}")
+        return qrList.contains(qrResult?.text)
+
     }
 
     private val fileScannerQrCodeResult = registerForActivityResult(ActivityResultContracts.GetContent()) { data ->
@@ -51,6 +63,8 @@ class MainActivity : ComponentActivity() {
                     val qrCodeFromFileScanner = FileScanner(contentResolver, QRCodeReader())
                     val result = qrCodeFromFileScanner.scan(data)
                     Log.i("RESULT", "result: $result, data: $data")
+                    qrResult= result
+                    galleryChoose(qrArrayList)
                     if (result != null) {
                         withContext(Dispatchers.Main) {
                             Log.i("RESULT", "result: ${result.text}")
