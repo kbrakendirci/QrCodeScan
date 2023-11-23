@@ -1,5 +1,6 @@
 package com.example.qrcodescanner
 
+import android.R
 import android.R.attr.data
 import android.app.Activity
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.example.qrcodescanner.FileUtil.getRotatedImage
 import com.example.qrcodescanner.FileUtil.toBitmap
@@ -44,7 +47,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var imagePath: String
     private var qrResult: Result? = null
-    private lateinit var takePhotoUri: Uri
     val qrArrayList: ArrayList<String> = arrayListOf("emre.com", "kübra.com", "btc.com")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,9 +105,13 @@ class MainActivity : ComponentActivity() {
     private val takeAPhotoResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 FileUtil.getImage(imagePath).toBitmap()?.getRotatedImage(imagePath)?.let { image ->
+                    if (imagePath== null) return@registerForActivityResult
+                    val contentResolver = contentResolver ?: return@registerForActivityResult
+                    val takePhotoUri=imagePath.toUri()
                     lifecycleScope.launch {
-                        if (FileScanner.validContentType(contentResolver, takePhotoUri)) {
+                        if (FileScanner.validContentType(contentResolver,takePhotoUri)) {
                             try {
+                                var takePhotoUri=imagePath.toUri()
                                 val qrCodeFromFileScanner = FileScanner(contentResolver, QRCodeReader())
                                 val result = qrCodeFromFileScanner.scan(takePhotoUri)
                                 Log.i("RESULT", "result: $result, data: $ takePhotoUri")
@@ -143,7 +149,7 @@ class MainActivity : ComponentActivity() {
                 val authority = BuildConfig.APPLICATION_ID + ".provider"
                 val uri: Uri = FileProvider.getUriForFile(this, authority, file)
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-                takePhotoUri=uri
+                //takePhotoUri=uri
                 takeAPhotoResultLauncher.launch(takePictureIntent)
             }
         }
