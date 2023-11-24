@@ -1,6 +1,7 @@
 package com.example.qrcodescanner
 
 import android.R
+import android.R.attr.background
 import android.R.attr.data
 import android.app.Activity
 import android.content.Intent
@@ -17,13 +18,20 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
@@ -37,6 +45,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 
 class MainActivity : ComponentActivity() {
@@ -61,7 +85,32 @@ class MainActivity : ComponentActivity() {
                     //fileScannerQrCodeResult.launch(IMPORT_LAUNCH_INPUT)
                     //galleryChoose(arrayListOf("emre.com","kübra.com","btc.com"))
                     //takeAPhotoResultLauncher
-                    dispatchTakePictureIntent()
+                    var takeAPhoto by remember {
+                        mutableStateOf(false)
+                    }
+                    var pickAPhoto by remember {
+                        mutableStateOf(false)
+                    }
+
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Row {
+                            // Create a Main Button or Normal Button
+                            Button(onClick = { takeAPhoto=true }, modifier = Modifier.padding(8.dp)) {
+                                Text(text = "Fotoğraf Çek")
+                            }
+                            // Create a Text Button
+                            Button(onClick = { pickAPhoto=true}, modifier = Modifier.padding(8.dp)) {
+                                Text(text = "Fotoğraf Seç")
+                            }
+                        }
+                    }
+                   // dispatchTakePictureIntent()
+                    if (takeAPhoto==true) dispatchTakePictureIntent()
+                    if (pickAPhoto==true) fileScannerQrCodeResult.launch(IMPORT_LAUNCH_INPUT)
                 }
             }
         }
@@ -74,7 +123,8 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    private val fileScannerQrCodeResult = registerForActivityResult(ActivityResultContracts.GetContent()) { data ->
+    private val fileScannerQrCodeResult =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { data ->
             if (data == null) return@registerForActivityResult
             val contentResolver = contentResolver ?: return@registerForActivityResult
             lifecycleScope.launch {
@@ -102,17 +152,19 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private val takeAPhotoResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val takeAPhotoResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 FileUtil.getImage(imagePath).toBitmap()?.getRotatedImage(imagePath)?.let { image ->
-                    if (imagePath== null) return@registerForActivityResult
+                    if (imagePath == null) return@registerForActivityResult
                     val contentResolver = contentResolver ?: return@registerForActivityResult
-                    val takePhotoUri=imagePath.toUri()
+                    val takePhotoUri = imagePath.toUri()
                     lifecycleScope.launch {
-                        if (FileScanner.validContentType(contentResolver,takePhotoUri)) {
+                        if (FileScanner.validContentType(contentResolver, takePhotoUri)) {
                             try {
-                                var takePhotoUri=imagePath.toUri()
-                                val qrCodeFromFileScanner = FileScanner(contentResolver, QRCodeReader())
+                                var takePhotoUri = imagePath.toUri()
+                                val qrCodeFromFileScanner =
+                                    FileScanner(contentResolver, QRCodeReader())
                                 val result = qrCodeFromFileScanner.scan(takePhotoUri)
                                 Log.i("RESULT", "result: $result, data: $ takePhotoUri")
                                 qrResult = result
@@ -160,53 +212,3 @@ class MainActivity : ComponentActivity() {
 
 
 
-
-@Throws
-fun File.createBitmap(): Bitmap {
-    val options = BitmapFactory.Options()
-    options.inSampleSize = 2
-    options.inPreferredConfig = Bitmap.Config.ARGB_8888
-    val bitmap = BitmapFactory.decodeFile(absolutePath, options)
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val orientation = ExifInterface(this).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.ORIENTATION_UNDEFINED
-        )
-        bitmap.rotateBitmap(orientation)
-    } else {
-        bitmap
-    }
-}
-
-
-@Throws
-fun Bitmap.rotateBitmap(orientation: Int): Bitmap {
-    val matrix = Matrix()
-    when (orientation) {
-        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90F)
-        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180F)
-        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270F)
-        else -> matrix.postRotate(0F)
-    }
-    return Bitmap.createBitmap(
-        this, 0, 0, width, height,
-        matrix, true
-    )
-}
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    QrCodeScannerTheme {
-        Greeting("Android")
-    }
-}
