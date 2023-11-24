@@ -18,16 +18,7 @@ import java.util.Date
 import java.util.Locale
 
 object FileUtil {
-    fun createTempFile(): File? {
-        return try {
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val mediaFile = File.createTempFile(timeStamp, ".jpg")
-            val currentPhotoPath = mediaFile.absolutePath
-            mediaFile
-        } catch (e: Exception) {
-            null
-        }
-    }
+
 
     fun createImageFile(context: Context): File? {
         return try {
@@ -84,24 +75,6 @@ object FileUtil {
         return Bitmap.createBitmap(this, 0, 0, this.width, this.height, matrix, true)
     }
 
-    fun ByteArray.toBase64String(quality: Int = 40): String {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        val byteArray = byteArrayOutputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
-    }
 
-    fun Bitmap.toByteArray(): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray()
-    }
 
-    fun Bitmap.toBase64String(): String {
-        return Base64.encodeToString(toByteArray(), Base64.DEFAULT);
-    }
-
-    fun String.toBas64toBitmap(): Bitmap? {
-        val decodedString: ByteArray = Base64.decode(this, Base64.DEFAULT)
-        return BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-    }
 }
